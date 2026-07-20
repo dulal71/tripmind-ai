@@ -3,12 +3,19 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX, FiLogOut, FiUser } from 'react-icons/fi';
+import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX, FiLogOut, FiUser, FiMap, FiStar, FiMessageCircle, FiTrendingUp } from 'react-icons/fi';
 import { useState } from 'react';
 import { authClient } from '@/lib/auth-client';
 
 const navLinks = [
   { href: '/explore', label: 'Explore', icon: FiCompass },
+  { href: '/trips', label: 'My Trips', icon: FiMap },
+];
+
+const aiLinks = [
+  { href: '/planner', label: 'AI Planner', icon: FiStar },
+  { href: '/recommendations', label: 'Recommend', icon: FiTrendingUp },
+  { href: '/chat', label: 'AI Chat', icon: FiMessageCircle },
 ];
 
 export default function Navbar() {
@@ -57,6 +64,30 @@ export default function Navbar() {
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`relative flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'text-blue-400'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                }`}
+              >
+                <link.icon className="h-4 w-4" />
+                {link.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-indicator"
+                    className="absolute inset-x-0 -bottom-[calc(0.5rem+1px)] h-0.5 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </Link>
+            );
+          })}
+          {isLoggedIn && aiLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
@@ -149,6 +180,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
+                  title={link.label}
                   className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
                       ? 'text-blue-400 bg-blue-500/10'
@@ -156,7 +188,24 @@ export default function Navbar() {
                   }`}
                 >
                   <link.icon className="h-4 w-4" />
-                  {link.label}
+                </Link>
+              );
+            })}
+            {isLoggedIn && aiLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  title={link.label}
+                  className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'text-blue-400 bg-blue-500/10'
+                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                  }`}
+                >
+                  <link.icon className="h-4 w-4" />
                 </Link>
               );
             })}

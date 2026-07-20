@@ -2,6 +2,8 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import destinationRoutes from './routes/destinationRoutes';
+import tripRoutes from './routes/tripRoutes';
+import aiRoutes from './routes/aiRoutes';
 
 dotenv.config();
 
@@ -26,12 +28,14 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/destinations', destinationRoutes);
+app.use('/api/trips', tripRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Global Error Handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error('[Error]', err.stack || err);
   
-  const statusCode = err.statusCode || 500;
+  const statusCode = (err as { statusCode?: number }).statusCode || 500;
   res.status(statusCode).json({
     status: 'error',
     message: err.message || 'Internal Server Error',

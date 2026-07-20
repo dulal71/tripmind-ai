@@ -1,18 +1,23 @@
 import { ObjectId } from 'mongodb';
 
+export type TripBudget = 'economy' | 'budget' | 'moderate' | 'luxury';
+export type TripStyle = 'adventure' | 'cultural' | 'relaxation' | 'family' | 'romantic' | 'solo';
+export type TripStatus = 'planning' | 'upcoming' | 'completed' | 'cancelled';
+
 export interface Trip {
   _id?: ObjectId;
-  userId: string; // References Better Auth User ID
-  destination: string;
+  userId: string;
+  destinationId: ObjectId;
+  destinationName?: string;
+  destinationImage?: string;
   startDate: Date;
   endDate: Date;
   duration: number;
-  budget: 'economy' | 'budget' | 'moderate' | 'luxury';
-  travelStyle: 'adventure' | 'cultural' | 'relaxation' | 'family' | 'romantic' | 'solo';
+  budget: TripBudget;
+  travelStyle: TripStyle;
   travelerCount: number;
   interests: string[];
-  imageUrl?: string;
-  status: 'planning' | 'upcoming' | 'completed' | 'cancelled';
+  status: TripStatus;
   createdAt: Date;
   updatedAt: Date;
 }
