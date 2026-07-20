@@ -57,7 +57,7 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         name: data.name,
-        callbackURL: '/dashboard',
+        callbackURL: '/explore',
       }, {
         onRequest: () => {
           setIsLoading(true);
@@ -65,7 +65,7 @@ export default function RegisterPage() {
         onSuccess: () => {
           setIsLoading(false);
           toast.success('Account created successfully! Redirecting...');
-          router.push('/dashboard');
+          router.push('/explore');
         },
         onError: (ctx) => {
           setIsLoading(false);

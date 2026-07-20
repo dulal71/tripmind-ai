@@ -41,7 +41,7 @@ export default function LoginPage() {
       await authClient.signIn.email({
         email: data.email,
         password: data.password,
-        callbackURL: '/dashboard',
+        callbackURL: '/explore',
       }, {
         onRequest: () => {
           setIsLoading(true);
@@ -49,7 +49,7 @@ export default function LoginPage() {
         onSuccess: () => {
           setIsLoading(false);
           toast.success('Successfully signed in! Redirecting...');
-          router.push('/dashboard');
+          router.push('/explore');
         },
         onError: (ctx) => {
           setIsLoading(false);

@@ -4,13 +4,16 @@ import { connectDB } from './config/db';
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  // Connect Database
-  await connectDB();
-  
-  // Start Express server
-  app.listen(PORT, () => {
-    console.log(`[Server] TripMind AI API Server is running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  });
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
 };
 
 startServer();

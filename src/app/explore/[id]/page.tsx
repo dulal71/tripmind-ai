@@ -1,11 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import api from '@/lib/api';
 import {
   FiArrowLeft,
   FiStar,
@@ -17,8 +17,6 @@ import {
   FiCalendar,
   FiCheckCircle,
 } from 'react-icons/fi';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 const categoryColors: Record<string, string> = {
   beach: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/20',
@@ -57,7 +55,7 @@ export default function DestinationDetailPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['destination', id],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/api/destinations/${id}`);
+      const { data } = await api.get(`/api/destinations/${id}`);
       return data.data;
     },
     enabled: !!id,

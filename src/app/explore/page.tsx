@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { useState, useCallback, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,8 +16,7 @@ import {
 } from 'react-icons/fi';
 import DestinationCard from '@/components/destinations/DestinationCard';
 import DestinationCardSkeleton from '@/components/destinations/DestinationCardSkeleton';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import api from '@/lib/api';
 
 const continents = ['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania'];
 const categories = ['beach', 'mountain', 'city', 'cultural', 'adventure', 'nature', 'island', 'desert'];
@@ -85,7 +83,7 @@ export default function ExplorePage() {
       if (debouncedSearch) params.search = debouncedSearch;
       if (continent) params.continent = continent;
       if (category) params.category = category;
-      const { data } = await axios.get(`${API_BASE}/api/destinations`, { params });
+      const { data } = await api.get('/api/destinations', { params });
       return data;
     },
   });

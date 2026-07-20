@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX } from 'react-icons/fi';
+import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX, FiLogOut, FiUser } from 'react-icons/fi';
 import { useState } from 'react';
+import { authClient } from '@/lib/auth-client';
 
 const navLinks = [
   { href: '/explore', label: 'Explore', icon: FiCompass },
@@ -12,10 +13,28 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
-  // Hide navbar on auth pages
   if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) return null;
+
+  const user = session?.user;
+  const isLoggedIn = !!user;
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await authClient.signOut();
+      router.push('/');
+      router.refresh();
+    } catch {
+      // silent
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   return (
     <motion.nav
@@ -65,20 +84,44 @@ export default function Navbar() {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-2">
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
-          >
-            <FiLogIn className="h-4 w-4" />
-            Sign In
-          </Link>
-          <Link
-            href="/register"
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:from-blue-500 hover:to-violet-500 active:scale-[0.98] transition-all"
-          >
-            <FiUserPlus className="h-4 w-4" />
-            Sign Up
-          </Link>
+          {isPending ? (
+            <div className="h-9 w-32 animate-pulse rounded-lg bg-zinc-800" />
+          ) : isLoggedIn ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+              >
+                <FiUser className="h-4 w-4" />
+                {user.name || user.email}
+              </Link>
+              <button
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+                className="flex items-center gap-1.5 rounded-lg border border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <FiLogOut className="h-4 w-4" />
+                {isSigningOut ? 'Signing out...' : 'Sign Out'}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+              >
+                <FiLogIn className="h-4 w-4" />
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:from-blue-500 hover:to-violet-500 active:scale-[0.98] transition-all"
+              >
+                <FiUserPlus className="h-4 w-4" />
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -118,22 +161,50 @@ export default function Navbar() {
               );
             })}
             <div className="mt-2 border-t border-zinc-800 pt-3 flex flex-col gap-2">
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
-              >
-                <FiLogIn className="h-4 w-4" />
-                Sign In
-              </Link>
-              <Link
-                href="/register"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 justify-center rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-semibold text-white transition-all"
-              >
-                <FiUserPlus className="h-4 w-4" />
-                Sign Up
-              </Link>
+              {isPending ? (
+                <div className="space-y-2">
+                  <div className="h-12 animate-pulse rounded-lg bg-zinc-800" />
+                  <div className="h-12 animate-pulse rounded-lg bg-zinc-800" />
+                </div>
+              ) : isLoggedIn ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <FiUser className="h-4 w-4" />
+                    {user.name || user.email}
+                  </Link>
+                  <button
+                    onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                    disabled={isSigningOut}
+                    className="flex items-center gap-2 rounded-lg border border-zinc-800 px-4 py-3 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    <FiLogOut className="h-4 w-4" />
+                    {isSigningOut ? 'Signing out...' : 'Sign Out'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                  >
+                    <FiLogIn className="h-4 w-4" />
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 justify-center rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-semibold text-white transition-all"
+                  >
+                    <FiUserPlus className="h-4 w-4" />
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </motion.div>
