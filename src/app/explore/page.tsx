@@ -20,6 +20,7 @@ import api from '@/lib/api';
 
 const continents = ['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania'];
 const categories = ['beach', 'mountain', 'city', 'cultural', 'adventure', 'nature', 'island', 'desert'];
+const seasons = ['Spring', 'Summer', 'Fall', 'Winter', 'Year-round'];
 const sortOptions = [
   { value: 'rating-desc', label: 'Top Rated' },
   { value: 'rating-asc', label: 'Lowest Rated' },
@@ -29,8 +30,10 @@ const sortOptions = [
   { value: 'name-desc', label: 'Name: Z → A' },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface PaginatedResponse {
   status: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   pagination: {
     currentPage: number;
@@ -47,6 +50,7 @@ export default function ExplorePage() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [continent, setContinent] = useState(searchParams.get('continent') || '');
   const [category, setCategory] = useState(searchParams.get('category') || '');
+  const [season, setSeason] = useState(searchParams.get('season') || '');
   const [sort, setSort] = useState(searchParams.get('sort') || 'rating-desc');
   const [page, setPage] = useState(parseInt(searchParams.get('page') || '1', 10));
   const [debouncedSearch, setDebouncedSearch] = useState(search);
@@ -66,23 +70,25 @@ export default function ExplorePage() {
     if (debouncedSearch) params.set('search', debouncedSearch);
     if (continent) params.set('continent', continent);
     if (category) params.set('category', category);
+    if (season) params.set('season', season);
     if (sort !== 'rating-desc') params.set('sort', sort);
     if (page > 1) params.set('page', page.toString());
     const qs = params.toString();
     router.replace(`/explore${qs ? `?${qs}` : ''}`, { scroll: false });
-  }, [debouncedSearch, continent, category, sort, page, router]);
+  }, [debouncedSearch, continent, category, season, sort, page, router]);
 
   useEffect(() => {
     syncParams();
   }, [syncParams]);
 
   const { data, isLoading, isError } = useQuery<PaginatedResponse>({
-    queryKey: ['destinations', debouncedSearch, continent, category, sort, page],
+    queryKey: ['destinations', debouncedSearch, continent, category, season, sort, page],
     queryFn: async () => {
       const params: Record<string, string> = { page: page.toString(), limit: '12', sort };
       if (debouncedSearch) params.search = debouncedSearch;
       if (continent) params.continent = continent;
       if (category) params.category = category;
+      if (season) params.season = season;
       const { data } = await api.get('/api/destinations', { params });
       return data;
     },
@@ -90,12 +96,13 @@ export default function ExplorePage() {
 
   const destinations = data?.data || [];
   const pagination = data?.pagination;
-  const hasActiveFilters = continent || category || debouncedSearch;
+  const hasActiveFilters = continent || category || season || debouncedSearch;
 
   const clearFilters = () => {
     setSearch('');
     setContinent('');
     setCategory('');
+    setSeason('');
     setSort('rating-desc');
     setPage(1);
   };
@@ -190,6 +197,23 @@ export default function ExplorePage() {
                 <FiChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
               </div>
 
+              {/* Season filter */}
+              <div className="relative">
+                <select
+                  id="filter-season"
+                  value={season}
+                  onChange={(e) => { setSeason(e.target.value); setPage(1); }}
+                  className="appearance-none rounded-lg border border-zinc-800 bg-zinc-900/80 py-2 pl-9 pr-8 text-sm text-zinc-300 backdrop-blur-sm focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer"
+                >
+                  <option value="">All Seasons</option>
+                  {seasons.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <FiGlobe className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                <FiChevronDown className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+              </div>
+
               {/* Sort */}
               <div className="relative">
                 <select
@@ -261,13 +285,14 @@ export default function ExplorePage() {
         ) : (
           <AnimatePresence mode="wait">
             <motion.div
-              key={`${debouncedSearch}-${continent}-${category}-${sort}-${page}`}
+              key={`${debouncedSearch}-${continent}-${category}-${season}-${sort}-${page}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
               className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
             >
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {destinations.map((dest: any, i: number) => (
                 <motion.div
                   key={dest._id}

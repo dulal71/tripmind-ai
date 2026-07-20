@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { FiStar, FiMapPin, FiDollarSign } from 'react-icons/fi';
+import FavoriteButton from '@/components/ui/FavoriteButton';
 
 interface Destination {
   _id: string;
@@ -61,6 +62,11 @@ export default function DestinationCard({ destination }: { destination: Destinat
           {/* Continent pill */}
           <div className="absolute top-3 right-3 rounded-full bg-zinc-950/60 backdrop-blur-md border border-zinc-700/50 px-3 py-1 text-xs font-medium text-zinc-300">
             {destination.continent}
+          </div>
+
+          {/* Favorite button */}
+          <div className="absolute bottom-3 right-3 z-10">
+            <FavoriteButton destinationId={destination._id} size="sm" />
           </div>
 
           {/* Location overlay */}

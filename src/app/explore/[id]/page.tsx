@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import api from '@/lib/api';
+import FavoriteButton from '@/components/ui/FavoriteButton';
 import {
   FiArrowLeft,
   FiStar,
@@ -113,6 +114,11 @@ export default function DestinationDetailPage() {
           <FiArrowLeft className="h-4 w-4" />
           Back
         </Link>
+
+        {/* Favorite button */}
+        <div className="absolute top-6 right-6 z-10">
+          <FavoriteButton destinationId={id} />
+        </div>
 
         {/* Title overlay */}
         <div className="absolute bottom-0 left-0 right-0 z-10 p-6 sm:p-10">

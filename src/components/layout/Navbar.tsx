@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX, FiLogOut, FiUser, FiMap, FiStar, FiMessageCircle, FiTrendingUp } from 'react-icons/fi';
+import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX, FiLogOut, FiUser, FiMap, FiStar, FiMessageCircle, FiTrendingUp, FiHeart } from 'react-icons/fi';
 import { useState } from 'react';
 import { authClient } from '@/lib/auth-client';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const navLinks = [
   { href: '/explore', label: 'Explore', icon: FiCompass },
@@ -87,34 +88,57 @@ export default function Navbar() {
               </Link>
             );
           })}
-          {isLoggedIn && aiLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
+          {isLoggedIn && (
+            <>
               <Link
-                key={link.href}
-                href={link.href}
+                href="/favorites"
                 className={`relative flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-blue-400'
+                  pathname === '/favorites'
+                    ? 'text-rose-400'
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                 }`}
               >
-                <link.icon className="h-4 w-4" />
-                {link.label}
-                {isActive && (
+                <FiHeart className="h-4 w-4" />
+                Favorites
+                {pathname === '/favorites' && (
                   <motion.div
                     layoutId="nav-indicator"
-                    className="absolute inset-x-0 -bottom-[calc(0.5rem+1px)] h-0.5 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"
+                    className="absolute inset-x-0 -bottom-[calc(0.5rem+1px)] h-0.5 bg-gradient-to-r from-rose-500 to-pink-500 rounded-full"
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   />
                 )}
               </Link>
-            );
-          })}
+              {aiLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`relative flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'text-blue-400'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    }`}
+                  >
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-indicator"
+                        className="absolute inset-x-0 -bottom-[calc(0.5rem+1px)] h-0.5 bg-gradient-to-r from-blue-500 to-violet-500 rounded-full"
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </div>
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
           {isPending ? (
             <div className="h-9 w-32 animate-pulse rounded-lg bg-zinc-800" />
           ) : isLoggedIn ? (
@@ -156,12 +180,15 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden flex items-center justify-center rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
-        >
-          {mobileOpen ? <FiX className="h-5 w-5" /> : <FiMenu className="h-5 w-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="flex items-center justify-center rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+          >
+            {mobileOpen ? <FiX className="h-5 w-5" /> : <FiMenu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -180,7 +207,6 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  title={link.label}
                   className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                     isActive
                       ? 'text-blue-400 bg-blue-500/10'
@@ -188,27 +214,44 @@ export default function Navbar() {
                   }`}
                 >
                   <link.icon className="h-4 w-4" />
+                  {link.label}
                 </Link>
               );
             })}
-            {isLoggedIn && aiLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
+            {isLoggedIn && (
+              <>
                 <Link
-                  key={link.href}
-                  href={link.href}
+                  href="/favorites"
                   onClick={() => setMobileOpen(false)}
-                  title={link.label}
                   className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-blue-400 bg-blue-500/10'
+                    pathname === '/favorites'
+                      ? 'text-rose-400 bg-rose-500/10'
                       : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                   }`}
                 >
-                  <link.icon className="h-4 w-4" />
+                  <FiHeart className="h-4 w-4" />
+                  Favorites
                 </Link>
-              );
-            })}
+                {aiLinks.map((link) => {
+                  const isActive = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'text-blue-400 bg-blue-500/10'
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                      }`}
+                    >
+                      <link.icon className="h-4 w-4" />
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </>
+            )}
             <div className="mt-2 border-t border-zinc-800 pt-3 flex flex-col gap-2">
               {isPending ? (
                 <div className="space-y-2">

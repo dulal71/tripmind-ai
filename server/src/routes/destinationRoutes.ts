@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { ObjectId } from 'mongodb';
 import { getDB } from '../config/db';
 import { Destination } from '../models/Destination';
+import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -16,11 +17,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       search,
       continent,
       category,
+      season,
       sort = 'rating-desc',
       page = '1',
       limit = '12',
     } = req.query as Record<string, string>;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: Record<string, any> = {};
 
     // Search — case-insensitive regex across name, country, description
@@ -41,6 +44,11 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     // Filter by category (matches any in the categories array)
     if (category) {
       filter.categories = category;
+    }
+
+    // Filter by season/bestTimeToVisit
+    if (season) {
+      filter.bestTimeToVisit = { $regex: season, $options: 'i' };
     }
 
     // Sort mapping
@@ -106,7 +114,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // ─── POST /api/destinations ─────────────────────────────────────────────────────
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const now = new Date();
     const destination: Destination = {
@@ -127,7 +135,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // ─── PUT /api/destinations/:id ──────────────────────────────────────────────────
-router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -157,7 +165,7 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // ─── DELETE /api/destinations/:id ───────────────────────────────────────────────
-router.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 

@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "concurrently \"next dev\" \"cd server && npm run dev\"",
+    "dev:server": "cd server && npm run dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "cd server && npm run seed"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

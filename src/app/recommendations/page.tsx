@@ -259,7 +259,9 @@ export default function RecommendationsPage() {
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="text-xl font-bold text-white">{rec.name}</h3>
+                          <Link href={`/explore?search=${encodeURIComponent(rec.name)}`} className="text-xl font-bold text-white hover:text-blue-400 transition-colors">
+                            {rec.name}
+                          </Link>
                           <p className="text-sm text-zinc-400 flex items-center gap-1">
                             <FiMap className="h-3 w-3" />
                             {rec.country}, {rec.continent}

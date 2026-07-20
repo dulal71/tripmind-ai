@@ -17,7 +17,9 @@ export interface Trip {
   travelStyle: TripStyle;
   travelerCount: number;
   interests: string[];
+  preferences?: string;
   status: TripStatus;
+  aiItinerary?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }

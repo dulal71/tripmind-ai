@@ -16,12 +16,15 @@ import {
   FiChevronDown,
   FiPackage,
   FiThermometer,
+  FiSave,
 } from 'react-icons/fi';
 import { authClient } from '@/lib/auth-client';
 import { useGenerateItinerary } from '@/hooks/useAI';
 import { Itinerary, BUDGET_OPTIONS, STYLE_OPTIONS, INTEREST_OPTIONS } from '@/types/ai';
 import api from '@/lib/api';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 interface Destination {
   _id: string;
@@ -33,6 +36,7 @@ interface Destination {
 
 export default function PlannerPage() {
   const { data: session } = authClient.useSession();
+  const router = useRouter();
   const [destinationId, setDestinationId] = useState('');
   const [duration, setDuration] = useState(5);
   const [budget, setBudget] = useState('moderate');
@@ -40,6 +44,7 @@ export default function PlannerPage() {
   const [travelerCount, setTravelerCount] = useState(1);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const generateItinerary = useGenerateItinerary();
 
@@ -73,6 +78,38 @@ export default function PlannerPage() {
       setItinerary(result);
     } catch {
       // Error handled by mutation
+    }
+  };
+
+  const handleSaveToTrip = async () => {
+    if (!destinationId || !itinerary) return;
+    setIsSaving(true);
+    try {
+      // Create a trip with the generated itinerary
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(startDate.getDate() + duration);
+
+      const { data } = await api.post('/api/trips', {
+        destinationId,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        budget,
+        travelStyle,
+        travelerCount,
+        interests: selectedInterests,
+      });
+
+      // Save the itinerary to the trip
+      const tripId = data.data._id;
+      await api.post(`/api/ai/trip/${tripId}/itinerary`);
+
+      toast.success('Itinerary saved to your trips!');
+      router.push(`/trips/${tripId}`);
+    } catch {
+      toast.error('Failed to save itinerary. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -402,6 +439,27 @@ export default function PlannerPage() {
                         ))}
                       </ul>
                     </div>
+                  </div>
+
+                  {/* Save to Trip Button */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={handleSaveToTrip}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSaving ? (
+                        <>
+                          <FiLoader className="h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FiSave className="h-4 w-4" />
+                          Save to My Trips
+                        </>
+                      )}
+                    </button>
                   </div>
                 </motion.div>
               ) : (

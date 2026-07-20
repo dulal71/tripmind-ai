@@ -1,4 +1,12 @@
+import dotenv from "dotenv";
+
+dotenv.config();
 import OpenAI from 'openai';
+
+if (!process.env.OPENAI_API_KEY) {
+  console.error('FATAL: OPENAI_API_KEY is not set in environment variables');
+  process.exit(1);
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -183,6 +191,28 @@ export async function chat(
   });
 
   return response.choices[0]?.message?.content || 'I apologize, but I could not generate a response.';
+}
+
+export async function chatStream(
+  messages: ChatMessage[],
+  context?: string
+) {
+  const systemMessage = context
+    ? `${CHAT_SYSTEM_PROMPT}\n\nAdditional context about the user's trips: ${context}`
+    : CHAT_SYSTEM_PROMPT;
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: systemMessage },
+      ...messages,
+    ],
+    temperature: 0.7,
+    max_tokens: 1500,
+    stream: true,
+  });
+
+  return response;
 }
 
 export async function generateTripItinerary(destinationName: string, country: string, duration: number, budget: string, travelStyle: string, interests: string[]) {
