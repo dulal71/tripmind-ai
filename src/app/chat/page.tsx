@@ -13,7 +13,6 @@ import {
   FiPlus,
 } from 'react-icons/fi';
 import { authClient } from '@/lib/auth-client';
-import { useChat } from '@/hooks/useAI';
 import { ChatMessageUI, SUGGESTED_PROMPTS } from '@/types/ai';
 import api from '@/lib/api';
 import Link from 'next/link';
@@ -31,9 +30,9 @@ export default function ChatPage() {
   const [historyId, setHistoryId] = useState<string | undefined>(undefined);
   const [chatHistories, setChatHistories] = useState<ChatHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdRef = useRef(0);
-  const chatMutation = useChat();
 
   const nextId = useCallback(() => {
     msgIdRef.current += 1;
@@ -100,7 +99,7 @@ export default function ChatPage() {
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim()) return;
+    if (!content.trim() || isStreaming) return;
 
     const userMsg: ChatMessageUI = {
       id: nextId(),
@@ -112,6 +111,7 @@ export default function ChatPage() {
     const updatedMessages = [...messages, userMsg];
     setMessages(updatedMessages);
     setInput('');
+    setIsStreaming(true);
 
     const assistantMsgId = nextId();
     const assistantMsg: ChatMessageUI = {
@@ -123,17 +123,25 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, assistantMsg]);
 
     try {
+      const session = await authClient.getSession();
+      const token = session?.data?.session?.token || '';
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/ai/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${document.cookie.match(/better-auth.session_token=([^;]+)/)?.[1] || ''}`,
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
           historyId,
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `Server error: ${response.status}`);
+      }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -151,6 +159,9 @@ export default function ChatPage() {
             if (line.startsWith('data: ')) {
               try {
                 const data = JSON.parse(line.slice(6));
+                if (data.error) {
+                  throw new Error(data.error);
+                }
                 if (data.content) {
                   accumulated += data.content;
                   const snapshot = accumulated;
@@ -176,14 +187,17 @@ export default function ChatPage() {
           }
         }
       }
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsgId
-            ? { ...m, content: 'Sorry, I encountered an error. Please make sure the OPENAI_API_KEY is configured in the server.' }
+            ? { ...m, content: `Sorry, I encountered an error: ${message}` }
             : m
         )
       );
+    } finally {
+      setIsStreaming(false);
     }
   };
 
@@ -350,7 +364,7 @@ export default function ChatPage() {
                   ))}
                 </AnimatePresence>
 
-                {chatMutation.isPending && (
+                {isStreaming && (
                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 shrink-0">
                       <FiCpu className="h-4 w-4 text-white" />
@@ -379,12 +393,12 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about travel destinations, packing, visas..."
-              disabled={chatMutation.isPending}
+              disabled={isStreaming}
               className="flex-1 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 px-4 py-3 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={!input.trim() || chatMutation.isPending}
+              disabled={!input.trim() || isStreaming}
               className="flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               <FiSend className="h-4 w-4" />

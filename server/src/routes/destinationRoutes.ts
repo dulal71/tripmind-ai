@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import { getDB } from '../config/db';
 import { Destination } from '../models/Destination';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAdmin } from '../middleware/admin';
 
 const router = Router();
 
@@ -114,7 +115,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // ─── POST /api/destinations ─────────────────────────────────────────────────────
-router.post('/', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.post('/', requireAuth, requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const now = new Date();
     const destination: Destination = {
@@ -135,7 +136,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response, next: Next
 });
 
 // ─── PUT /api/destinations/:id ──────────────────────────────────────────────────
-router.put('/:id', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.put('/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -165,7 +166,7 @@ router.put('/:id', requireAuth, async (req: AuthRequest, res: Response, next: Ne
 });
 
 // ─── DELETE /api/destinations/:id ───────────────────────────────────────────────
-router.delete('/:id', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
 

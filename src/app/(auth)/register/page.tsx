@@ -14,6 +14,7 @@ import Link from 'next/link';
 const registerSchema = z
   .object({
     name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+    role:z.string(),
     email: z.string().email({ message: 'Please enter a valid email address' }),
     password: z
       .string()
@@ -46,6 +47,7 @@ export default function RegisterPage() {
       name: '',
       email: '',
       password: '',
+      role:'user',
       confirmPassword: '',
     },
   });
@@ -57,6 +59,7 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         name: data.name,
+        role:'user',
         callbackURL: '/explore',
       }, {
         onSuccess: () => {

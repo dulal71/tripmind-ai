@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "groq/llama3-70b-8192",
+  "small_model": "groq/llama3-8b-8192",
+  "provider": {
+    "groq": {
+      "apiKey": "{env:GROQ_API_KEY}"
+    }
+  }
+}

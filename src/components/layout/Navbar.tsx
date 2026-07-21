@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX, FiLogOut, FiUser, FiMap, FiStar, FiMessageCircle, FiTrendingUp, FiHeart } from 'react-icons/fi';
-import { useState } from 'react';
+import { FiCompass, FiLogIn, FiUserPlus, FiMenu, FiX, FiLogOut, FiUser, FiMap, FiStar, FiMessageCircle, FiTrendingUp, FiHeart, FiShield } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
 import { authClient } from '@/lib/auth-client';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 
@@ -25,11 +25,28 @@ export default function Navbar() {
   const { data: session, isPending } = authClient.useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-
-  if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) return null;
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const user = session?.user;
   const isLoggedIn = !!user;
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!session?.session?.token) return;
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${session.session.token}` },
+        });
+        const data = await res.json();
+        setUserRole(data.data?.role || 'user');
+      } catch {
+        setUserRole('user');
+      }
+    };
+    fetchRole();
+  }, [session]);
+
+  if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) return null;
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -42,6 +59,19 @@ export default function Navbar() {
     } finally {
       setIsSigningOut(false);
     }
+  };
+
+  const linkClass = (isActive: boolean, color?: string) => {
+    const activeColor = color || 'blue';
+    const colorMap: Record<string, string> = {
+      blue: 'text-blue-500 dark:text-blue-400',
+      rose: 'text-rose-500 dark:text-rose-400',
+    };
+    return `relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+      isActive
+        ? colorMap[activeColor] || colorMap.blue
+        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
+    }`;
   };
 
   return (
@@ -62,21 +92,17 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Links (lg+) */}
-        <div className="hidden lg:flex items-center gap-1">
+        {/* Desktop Nav Links (centered) */}
+        <div className="hidden lg:flex items-center justify-center gap-0.5 min-w-0 flex-1 mx-4">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-blue-500 dark:text-blue-400'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
-                }`}
+                className={linkClass(isActive)}
               >
-                <link.icon className="h-4 w-4" />
+                <link.icon className="h-4 w-4 shrink-0" />
                 {link.label}
                 {isActive && (
                   <motion.div
@@ -92,13 +118,9 @@ export default function Navbar() {
             <>
               <Link
                 href="/favorites"
-                className={`relative flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  pathname === '/favorites'
-                    ? 'text-rose-500 dark:text-rose-400'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
-                }`}
+                className={linkClass(pathname === '/favorites', 'rose')}
               >
-                <FiHeart className="h-4 w-4" />
+                <FiHeart className="h-4 w-4 shrink-0" />
                 Favorites
                 {pathname === '/favorites' && (
                   <motion.div
@@ -114,13 +136,9 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`relative flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'text-blue-500 dark:text-blue-400'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
-                    }`}
+                    className={linkClass(isActive)}
                   >
-                    <link.icon className="h-4 w-4" />
+                    <link.icon className="h-4 w-4 shrink-0" />
                     {link.label}
                     {isActive && (
                       <motion.div
@@ -136,8 +154,8 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Desktop Auth (lg+) */}
-        <div className="hidden lg:flex items-center gap-2">
+        {/* Desktop Auth (right side) */}
+        <div className="hidden lg:flex items-center gap-1.5 shrink-0">
           <ThemeToggle />
           {isPending ? (
             <div className="h-9 w-32 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
@@ -145,17 +163,26 @@ export default function Navbar() {
             <>
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors whitespace-nowrap"
               >
-                <FiUser className="h-4 w-4" />
-                {user.name || user.email}
+                <FiUser className="h-4 w-4 shrink-0" />
+                <span className="truncate max-w-[120px]">{user.name || user.email}</span>
               </Link>
+              {userRole === 'admin' && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors whitespace-nowrap"
+                >
+                  <FiShield className="h-4 w-4 shrink-0" />
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 px-4 py-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors disabled:opacity-50 cursor-pointer"
+                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors disabled:opacity-50 cursor-pointer whitespace-nowrap"
               >
-                <FiLogOut className="h-4 w-4" />
+                <FiLogOut className="h-4 w-4 shrink-0" />
                 {isSigningOut ? 'Signing out...' : 'Sign Out'}
               </button>
             </>
@@ -163,16 +190,16 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors whitespace-nowrap"
               >
-                <FiLogIn className="h-4 w-4" />
+                <FiLogIn className="h-4 w-4 shrink-0" />
                 Sign In
               </Link>
               <Link
                 href="/register"
-                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:from-blue-500 hover:to-violet-500 active:scale-[0.98] transition-all"
+                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:from-blue-500 hover:to-violet-500 active:scale-[0.98] transition-all whitespace-nowrap"
               >
-                <FiUserPlus className="h-4 w-4" />
+                <FiUserPlus className="h-4 w-4 shrink-0" />
                 Sign Up
               </Link>
             </>
@@ -180,7 +207,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile + md: Menu Icon */}
-        <div className="lg:hidden flex items-center gap-1">
+        <div className="lg:hidden flex items-center gap-1 shrink-0">
           <ThemeToggle />
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
@@ -215,7 +242,7 @@ export default function Navbar() {
                         : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
                     }`}
                   >
-                    <link.icon className="h-4 w-4" />
+                    <link.icon className="h-4 w-4 shrink-0" />
                     {link.label}
                   </Link>
                 );
@@ -231,7 +258,7 @@ export default function Navbar() {
                         : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
                     }`}
                   >
-                    <FiHeart className="h-4 w-4" />
+                    <FiHeart className="h-4 w-4 shrink-0" />
                     Favorites
                   </Link>
                   {aiLinks.map((link) => {
@@ -247,7 +274,7 @@ export default function Navbar() {
                             : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
                         }`}
                       >
-                        <link.icon className="h-4 w-4" />
+                        <link.icon className="h-4 w-4 shrink-0" />
                         {link.label}
                       </Link>
                     );
@@ -267,15 +294,25 @@ export default function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
                     >
-                      <FiUser className="h-4 w-4" />
+                      <FiUser className="h-4 w-4 shrink-0" />
                       {user.name || user.email}
                     </Link>
+                    {userRole === 'admin' && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-500/10 transition-colors"
+                      >
+                        <FiShield className="h-4 w-4 shrink-0" />
+                        Admin Panel
+                      </Link>
+                    )}
                     <button
                       onClick={() => { handleSignOut(); setMobileOpen(false); }}
                       disabled={isSigningOut}
                       className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 px-4 py-3 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors disabled:opacity-50 cursor-pointer"
                     >
-                      <FiLogOut className="h-4 w-4" />
+                      <FiLogOut className="h-4 w-4 shrink-0" />
                       {isSigningOut ? 'Signing out...' : 'Sign Out'}
                     </button>
                   </>
@@ -286,7 +323,7 @@ export default function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
                     >
-                      <FiLogIn className="h-4 w-4" />
+                      <FiLogIn className="h-4 w-4 shrink-0" />
                       Sign In
                     </Link>
                     <Link
@@ -294,7 +331,7 @@ export default function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 justify-center rounded-lg bg-gradient-to-r from-blue-600 to-violet-600 px-4 py-3 text-sm font-semibold text-white transition-all"
                     >
-                      <FiUserPlus className="h-4 w-4" />
+                      <FiUserPlus className="h-4 w-4 shrink-0" />
                       Sign Up
                     </Link>
                   </>

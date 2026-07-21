@@ -1,16 +1,16 @@
-import dotenv from "dotenv";
-
-dotenv.config();
-
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
 
-if (!process.env.GEMINI_API_KEY) {
-  console.warn('WARNING: GEMINI_API_KEY is not set in environment variables');
-}
+let _genAI: GoogleGenerativeAI | null = null;
 
-const genAI = process.env.GEMINI_API_KEY
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  : null;
+function getGenAI(): GoogleGenerativeAI {
+  if (!_genAI) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not set in environment variables.');
+    }
+    _genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+  return _genAI;
+}
 
 export interface PlannerInput {
   destinationName: string;
@@ -122,14 +122,8 @@ Rules:
 - Use emoji sparingly for friendliness
 - If you don't know something specific, say so honestly`;
 
-function checkGeminiAvailable() {
-  if (!genAI) {
-    throw new Error('Gemini API is not configured. Please set GEMINI_API_KEY in your environment variables.');
-  }
-}
-
 export async function generateItinerary(input: PlannerInput) {
-  checkGeminiAvailable();
+  const genAI = getGenAI();
 
   const prompt = `Plan a ${input.duration}-day trip to ${input.destinationName}, ${input.country}.
 Budget level: ${input.budget}
@@ -139,7 +133,7 @@ Interests: ${input.interests.join(', ')}
 
 Create a detailed day-by-day itinerary with activities, meals, budget breakdown, packing list, and travel tips.`;
 
-  const model = genAI!.getGenerativeModel({
+  const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash',
     systemInstruction: PLANNER_SYSTEM_PROMPT,
     generationConfig: {
@@ -162,7 +156,7 @@ Create a detailed day-by-day itinerary with activities, meals, budget breakdown,
 }
 
 export async function getRecommendations(input: RecommendInput) {
-  checkGeminiAvailable();
+  const genAI = getGenAI();
 
   const prompt = `Recommend travel destinations for a traveler with these preferences:
 Budget level: ${input.budget}
@@ -172,7 +166,7 @@ Trip duration: ${input.duration} days${input.previousDestinations?.length ? `\nP
 
 Suggest personalized destinations that match their profile.`;
 
-  const model = genAI!.getGenerativeModel({
+  const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash',
     systemInstruction: RECOMMEND_SYSTEM_PROMPT,
     generationConfig: {
@@ -197,13 +191,13 @@ export async function chat(
   messages: ChatMessage[],
   context?: string
 ) {
-  checkGeminiAvailable();
+  const genAI = getGenAI();
 
   const systemMessage = context
     ? `${CHAT_SYSTEM_PROMPT}\n\nAdditional context about the user's trips: ${context}`
     : CHAT_SYSTEM_PROMPT;
 
-  const model = genAI!.getGenerativeModel({
+  const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash',
     systemInstruction: systemMessage,
     generationConfig: {
@@ -239,13 +233,13 @@ export async function chatStream(
   messages: ChatMessage[],
   context?: string
 ) {
-  checkGeminiAvailable();
+  const genAI = getGenAI();
 
   const systemMessage = context
     ? `${CHAT_SYSTEM_PROMPT}\n\nAdditional context about the user's trips: ${context}`
     : CHAT_SYSTEM_PROMPT;
 
-  const model = genAI!.getGenerativeModel({
+  const model = genAI.getGenerativeModel({
     model: 'gemini-2.0-flash',
     systemInstruction: systemMessage,
     generationConfig: {

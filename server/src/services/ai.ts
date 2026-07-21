@@ -1,16 +1,16 @@
-import dotenv from "dotenv";
-
-dotenv.config();
 import OpenAI from 'openai';
 
-if (!process.env.OPENAI_API_KEY) {
-  console.error('FATAL: OPENAI_API_KEY is not set in environment variables');
-  process.exit(1);
-}
+let _openai: OpenAI | null = null;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not set in environment variables.');
+    }
+    _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return _openai;
+}
 
 export interface PlannerInput {
   destinationName: string;
@@ -123,6 +123,8 @@ Rules:
 - If you don't know something specific, say so honestly`;
 
 export async function generateItinerary(input: PlannerInput) {
+  const openai = getOpenAI();
+
   const prompt = `Plan a ${input.duration}-day trip to ${input.destinationName}, ${input.country}.
 Budget level: ${input.budget}
 Travel style: ${input.travelStyle}
@@ -148,6 +150,8 @@ Create a detailed day-by-day itinerary with activities, meals, budget breakdown,
 }
 
 export async function getRecommendations(input: RecommendInput) {
+  const openai = getOpenAI();
+
   const prompt = `Recommend travel destinations for a traveler with these preferences:
 Budget level: ${input.budget}
 Travel style: ${input.travelStyle}
@@ -176,6 +180,8 @@ export async function chat(
   messages: ChatMessage[],
   context?: string
 ) {
+  const openai = getOpenAI();
+
   const systemMessage = context
     ? `${CHAT_SYSTEM_PROMPT}\n\nAdditional context about the user's trips: ${context}`
     : CHAT_SYSTEM_PROMPT;
@@ -197,6 +203,8 @@ export async function chatStream(
   messages: ChatMessage[],
   context?: string
 ) {
+  const openai = getOpenAI();
+
   const systemMessage = context
     ? `${CHAT_SYSTEM_PROMPT}\n\nAdditional context about the user's trips: ${context}`
     : CHAT_SYSTEM_PROMPT;

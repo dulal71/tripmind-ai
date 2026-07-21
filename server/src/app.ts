@@ -7,6 +7,7 @@ import aiRoutes from './routes/aiRoutes';
 import favoriteRoutes from './routes/favoriteRoutes';
 import userRoutes from './routes/userRoutes';
 import contactRoutes from './routes/contactRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Global Error Handler
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {

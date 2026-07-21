@@ -24,6 +24,8 @@ export default function RecommendationsPage() {
   const [duration, setDuration] = useState(7);
   const [recommendations, setRecommendations] = useState<RecommendDestination[] | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
+
   const getRecommendations = useGetRecommendations();
 
   const toggleInterest = (interest: string) => {
@@ -34,6 +36,7 @@ export default function RecommendationsPage() {
 
   const handleGetRecommendations = async () => {
     if (selectedInterests.length === 0) return;
+    setError(null);
     try {
       const result = await getRecommendations.mutateAsync({
         budget,
@@ -42,8 +45,9 @@ export default function RecommendationsPage() {
         duration,
       });
       setRecommendations(result.recommendations);
-    } catch {
-      // Error handled by mutation
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to get recommendations.';
+      setError(message);
     }
   };
 
@@ -197,10 +201,10 @@ export default function RecommendationsPage() {
                 )}
               </button>
 
-              {getRecommendations.isError && (
+              {error && (
                 <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 flex items-start gap-2">
                   <FiAlertCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
-                  <p className="text-xs text-red-400">Failed to get recommendations. Make sure OPENAI_API_KEY is configured.</p>
+                  <p className="text-xs text-red-400">{error}</p>
                 </div>
               )}
             </div>

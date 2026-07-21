@@ -45,6 +45,7 @@ export default function PlannerPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generateItinerary = useGenerateItinerary();
 
@@ -66,6 +67,7 @@ export default function PlannerPage() {
 
   const handleGenerate = async () => {
     if (!destinationId) return;
+    setError(null);
     try {
       const result = await generateItinerary.mutateAsync({
         destinationId,
@@ -76,8 +78,9 @@ export default function PlannerPage() {
         interests: selectedInterests,
       });
       setItinerary(result);
-    } catch {
-      // Error handled by mutation
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to generate itinerary.';
+      setError(message);
     }
   };
 
@@ -289,10 +292,10 @@ export default function PlannerPage() {
                 )}
               </button>
 
-              {generateItinerary.isError && (
+              {error && (
                 <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 flex items-start gap-2">
                   <FiAlertCircle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
-                  <p className="text-xs text-red-400">Failed to generate itinerary. Make sure OPENAI_API_KEY is configured in the server.</p>
+                  <p className="text-xs text-red-400">{error}</p>
                 </div>
               )}
             </div>

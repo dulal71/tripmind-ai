@@ -37,6 +37,7 @@ router.put('/profile', async (req: AuthRequest, res: Response, next: NextFunctio
         name: result.name,
         email: result.email,
         image: result.image,
+        role: result.role,
       },
     });
   } catch (error) {
@@ -64,6 +65,7 @@ router.get('/profile', async (req: AuthRequest, res: Response, next: NextFunctio
         name: user.name,
         email: user.email,
         image: user.image,
+        role: user.role,
         createdAt: user.createdAt,
       },
     });

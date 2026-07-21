@@ -3,7 +3,6 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { google } from "better-auth/providers";
 import clientPromise from "./db";
 
-// Better Auth uses the resolved MongoClient promise
 const client = await clientPromise;
 const db = client.db();
 
@@ -18,6 +17,15 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    },
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        input: false,
+        defaultValue: "user",
+      },
     },
   },
 });
