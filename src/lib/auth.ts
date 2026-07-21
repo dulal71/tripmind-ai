@@ -1,6 +1,5 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { google } from "better-auth/providers";
 import clientPromise from "./db";
 
 const client = await clientPromise;
@@ -27,5 +26,9 @@ export const auth = betterAuth({
         defaultValue: "user",
       },
     },
+  },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
   },
 });

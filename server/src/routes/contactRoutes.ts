@@ -1,6 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { getDB } from '../config/db';
 import { ContactMessage } from '../models/ContactMessage';
+import { requireAuth } from '../middleware/auth';
+import { requireAdmin } from '../middleware/admin';
+import { AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -37,8 +40,8 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 // ─── GET /api/contact ──────────────────────────────────────────────────────
-// Get all contact messages (admin only - placeholder for future)
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+// Get all contact messages (admin only)
+router.get('/', requireAuth, requireAdmin, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const messages = await getDB()
       .collection('contactMessages')

@@ -59,7 +59,6 @@ export default function RegisterPage() {
         email: data.email,
         password: data.password,
         name: data.name,
-        role:'user',
         callbackURL: '/explore',
       }, {
         onSuccess: () => {

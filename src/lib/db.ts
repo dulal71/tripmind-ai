@@ -1,11 +1,21 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, MongoClientOptions } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Please add your MONGODB_URI to .env');
 }
 
 const uri = process.env.MONGODB_URI;
-const options = {};
+
+// Production-ready MongoDB options
+const options: MongoClientOptions = {
+  maxPoolSize: 10, // Maintain up to 10 socket connections
+  minPoolSize: 2,  // Maintain a minimum of 2 socket connections
+  serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+  socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  family: 4, // Use IPv4, skip trying IPv6
+  retryWrites: true,
+  w: 'majority',
+};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;

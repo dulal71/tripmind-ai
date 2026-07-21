@@ -9,7 +9,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "cd server && npm run seed"
+    "seed": "cd server && npm run seed",
+    "typecheck": "tsc --noEmit",
+    "build:server": "cd server && npm run build",
+    "start:server": "cd server && npm start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -34,6 +37,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "concurrently": "^9.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",

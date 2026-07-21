@@ -113,13 +113,13 @@ export default function FavoritesPage() {
                       </p>
                     )}
                     <div className="flex items-center gap-3 mt-2">
-                      {fav.destinationRating > 0 && (
+                      {fav.destinationRating && fav.destinationRating > 0 && (
                         <span className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
                           <FiStar className="h-3 w-3 text-yellow-400" />
                           {fav.destinationRating}
                         </span>
                       )}
-                      {fav.destinationCostPerDay > 0 && (
+                      {fav.destinationCostPerDay && fav.destinationCostPerDay > 0 && (
                         <span className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
                           <FiDollarSign className="h-3 w-3 text-green-400" />
                           ${fav.destinationCostPerDay}/day

@@ -1,4 +1,4 @@
-import { MongoClient, Db } from 'mongodb';
+import { MongoClient, Db, MongoClientOptions } from 'mongodb';
 
 let client: MongoClient;
 let db: Db;
@@ -10,7 +10,18 @@ export const connectDB = async (): Promise<Db> => {
       throw new Error('MONGODB_URI environment variable is not defined.');
     }
 
-    client = new MongoClient(connString);
+    // Production-ready MongoDB options
+    const options: MongoClientOptions = {
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      minPoolSize: 2,  // Maintain a minimum of 2 socket connections
+      serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      family: 4, // Use IPv4, skip trying IPv6
+      retryWrites: true,
+      w: 'majority',
+    };
+
+    client = new MongoClient(connString, options);
     await client.connect();
     
     // Extract database name from connection string or default to 'tripmind-ai'
