@@ -7,6 +7,9 @@ export interface Favorite {
   destinationId: string;
   destinationName: string;
   destinationImage: string;
+  destinationCountry?: string;
+  destinationRating?: number;
+  destinationCostPerDay?: number;
   createdAt: string;
 }
 

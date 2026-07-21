@@ -59,9 +59,6 @@ export default function RegisterPage() {
         name: data.name,
         callbackURL: '/explore',
       }, {
-        onRequest: () => {
-          setIsLoading(true);
-        },
         onSuccess: () => {
           setIsLoading(false);
           toast.success('Account created successfully! Redirecting...');

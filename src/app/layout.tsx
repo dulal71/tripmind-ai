@@ -5,6 +5,7 @@ import QueryProvider from "@/components/providers/QueryProvider";
 import ThemeProvider from "@/components/ui/ThemeProvider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import ChatWidget from "@/components/ui/ChatWidget";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,12 +34,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-950 text-white dark:bg-zinc-950 dark:text-white">
+      <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <ThemeProvider>
           <QueryProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />
+            <ChatWidget />
           </QueryProvider>
           <Toaster 
             position="top-right" 

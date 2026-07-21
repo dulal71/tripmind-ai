@@ -3,21 +3,36 @@ import { ObjectId, Document } from 'mongodb';
 import { getDB } from '../config/db';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import {
-  generateItinerary,
-  getRecommendations,
-  chat,
-  chatStream,
-  generateTripItinerary,
+  generateItinerary as openaiGenerateItinerary,
+  getRecommendations as openaiGetRecommendations,
+  chat as openaiChat,
+  chatStream as openaiChatStream,
+  generateTripItinerary as openaiGenerateTripItinerary,
   ChatMessage,
 } from '../services/ai';
+import {
+  generateItinerary as geminiGenerateItinerary,
+  getRecommendations as geminiGetRecommendations,
+  chat as geminiChat,
+  chatStream as geminiChatStream,
+  generateTripItinerary as geminiGenerateTripItinerary,
+} from '../services/gemini';
 
 const router = Router();
+
+// Helper to determine AI provider from request body
+function getProvider(provider?: string): 'openai' | 'gemini' {
+  if (provider === 'gemini' && process.env.GEMINI_API_KEY) {
+    return 'gemini';
+  }
+  return 'openai';
+}
 
 // ─── POST /api/ai/planner ────────────────────────────────────────────────────
 // Generate a full itinerary from scratch (standalone planner)
 router.post('/planner', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { destinationId, duration, budget, travelStyle, travelerCount, interests } = req.body;
+    const { destinationId, duration, budget, travelStyle, travelerCount, interests, provider } = req.body;
 
     if (!destinationId || !ObjectId.isValid(destinationId)) {
       res.status(400).json({ status: 'error', message: 'Valid destination ID is required' });
@@ -37,7 +52,7 @@ router.post('/planner', requireAuth, async (req: AuthRequest, res: Response, nex
       return;
     }
 
-    const itinerary = await generateItinerary({
+    const input = {
       destinationName: destination.name,
       country: destination.country,
       duration: Number(duration),
@@ -45,9 +60,14 @@ router.post('/planner', requireAuth, async (req: AuthRequest, res: Response, nex
       travelStyle: travelStyle || 'cultural',
       travelerCount: travelerCount || 1,
       interests: interests || [],
-    });
+    };
 
-    res.status(200).json({ status: 'success', data: itinerary });
+    const aiProvider = getProvider(provider);
+    const itinerary = aiProvider === 'gemini'
+      ? await geminiGenerateItinerary(input)
+      : await openaiGenerateItinerary(input);
+
+    res.status(200).json({ status: 'success', data: itinerary, provider: aiProvider });
   } catch (error) {
     console.error('[AI Planner Error]', error);
     next(error);
@@ -59,6 +79,7 @@ router.post('/planner', requireAuth, async (req: AuthRequest, res: Response, nex
 router.post('/trip/:id/itinerary', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const { provider } = req.body;
 
     if (!ObjectId.isValid(id)) {
       res.status(400).json({ status: 'error', message: 'Invalid trip ID' });
@@ -78,7 +99,9 @@ router.post('/trip/:id/itinerary', requireAuth, async (req: AuthRequest, res: Re
 
     const destination = await db.collection('destinations').findOne({ _id: trip.destinationId });
 
-    const itinerary = await generateTripItinerary(
+    const aiProvider = getProvider(provider);
+    const itineraryFn = aiProvider === 'gemini' ? geminiGenerateTripItinerary : openaiGenerateTripItinerary;
+    const itinerary = await itineraryFn(
       destination?.name || trip.destinationName || 'Unknown',
       destination?.country || 'Unknown',
       trip.duration,
@@ -93,7 +116,7 @@ router.post('/trip/:id/itinerary', requireAuth, async (req: AuthRequest, res: Re
       { $set: { aiItinerary: itinerary, updatedAt: new Date() } }
     );
 
-    res.status(200).json({ status: 'success', data: itinerary });
+    res.status(200).json({ status: 'success', data: itinerary, provider: aiProvider });
   } catch (error) {
     console.error('[AI Trip Itinerary Error]', error);
     next(error);
@@ -104,7 +127,7 @@ router.post('/trip/:id/itinerary', requireAuth, async (req: AuthRequest, res: Re
 // Get personalized destination recommendations
 router.post('/recommend', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { budget, travelStyle, interests, duration } = req.body;
+    const { budget, travelStyle, interests, duration, provider } = req.body;
 
     if (!interests || interests.length === 0) {
       res.status(400).json({ status: 'error', message: 'At least one interest is required' });
@@ -121,15 +144,20 @@ router.post('/recommend', requireAuth, async (req: AuthRequest, res: Response, n
       .map((t: Document) => t.destinationName as string)
       .filter(Boolean);
 
-    const recommendations = await getRecommendations({
+    const input = {
       budget: budget || 'moderate',
       travelStyle: travelStyle || 'cultural',
       interests,
       duration: duration || 7,
       previousDestinations,
-    });
+    };
 
-    res.status(200).json({ status: 'success', data: recommendations });
+    const aiProvider = getProvider(provider);
+    const recommendations = aiProvider === 'gemini'
+      ? await geminiGetRecommendations(input)
+      : await openaiGetRecommendations(input);
+
+    res.status(200).json({ status: 'success', data: recommendations, provider: aiProvider });
   } catch (error) {
     console.error('[AI Recommend Error]', error);
     next(error);
@@ -140,7 +168,7 @@ router.post('/recommend', requireAuth, async (req: AuthRequest, res: Response, n
 // Chat with AI assistant
 router.post('/chat', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { messages, historyId } = req.body;
+    const { messages, historyId, provider } = req.body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ status: 'error', message: 'Messages array is required' });
@@ -167,7 +195,9 @@ router.post('/chat', requireAuth, async (req: AuthRequest, res: Response, next: 
       content: m.content,
     }));
 
-    const reply = await chat(typedMessages, context);
+    const aiProvider = getProvider(provider);
+    const chatFn = aiProvider === 'gemini' ? geminiChat : openaiChat;
+    const reply = await chatFn(typedMessages, context);
 
     // Persist chat history
     const now = new Date();
@@ -188,11 +218,11 @@ router.post('/chat', requireAuth, async (req: AuthRequest, res: Response, next: 
         createdAt: now,
         updatedAt: now,
       });
-      res.status(200).json({ status: 'success', data: { reply, historyId: result.insertedId } });
+      res.status(200).json({ status: 'success', data: { reply, historyId: result.insertedId, provider: aiProvider } });
       return;
     }
 
-    res.status(200).json({ status: 'success', data: { reply, historyId } });
+    res.status(200).json({ status: 'success', data: { reply, historyId, provider: aiProvider } });
   } catch (error) {
     console.error('[AI Chat Error]', error);
     next(error);
@@ -279,7 +309,7 @@ router.delete('/chat/history/:id', requireAuth, async (req: AuthRequest, res: Re
 // Stream chat with AI assistant using SSE
 router.post('/chat/stream', requireAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { messages, historyId } = req.body;
+    const { messages, historyId, provider } = req.body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       res.status(400).json({ status: 'error', message: 'Messages array is required' });
@@ -312,14 +342,28 @@ router.post('/chat/stream', requireAuth, async (req: AuthRequest, res: Response,
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
 
-    const stream = await chatStream(typedMessages, context);
+    const aiProvider = getProvider(provider);
     let fullContent = '';
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      if (content) {
-        fullContent += content;
-        res.write(`data: ${JSON.stringify({ content })}\n\n`);
+    if (aiProvider === 'gemini') {
+      // Gemini streaming
+      const stream = await geminiChatStream(typedMessages, context);
+      for await (const chunk of stream) {
+        const content = chunk.text || '';
+        if (content) {
+          fullContent += content;
+          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        }
+      }
+    } else {
+      // OpenAI streaming
+      const stream = await openaiChatStream(typedMessages, context);
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          fullContent += content;
+          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        }
       }
     }
 
@@ -347,7 +391,7 @@ router.post('/chat/stream', requireAuth, async (req: AuthRequest, res: Response,
     }
 
     // Send completion event with historyId
-    res.write(`data: ${JSON.stringify({ done: true, historyId: savedHistoryId })}\n\n`);
+    res.write(`data: ${JSON.stringify({ done: true, historyId: savedHistoryId, provider: aiProvider })}\n\n`);
     res.end();
   } catch (error) {
     console.error('[AI Chat Stream Error]', error);

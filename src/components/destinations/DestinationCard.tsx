@@ -36,7 +36,7 @@ export default function DestinationCard({ destination }: { destination: Destinat
     <motion.div
       whileHover={{ y: -6, scale: 1.02 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-sm hover:border-zinc-700 hover:shadow-2xl hover:shadow-blue-500/5 transition-colors duration-300"
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 backdrop-blur-sm hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-2xl hover:shadow-blue-500/5 transition-colors duration-300"
     >
       <Link href={`/explore/${destination._id}`} className="flex flex-col flex-1">
         {/* Image */}
@@ -78,11 +78,11 @@ export default function DestinationCard({ destination }: { destination: Destinat
 
         {/* Content */}
         <div className="flex flex-1 flex-col gap-2.5 p-5">
-          <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
+          <h3 className="text-lg font-bold text-zinc-900 dark:text-white group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
             {destination.name}
           </h3>
 
-          <p className="text-sm text-zinc-400 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
             {destination.shortDescription}
           </p>
 
@@ -93,12 +93,12 @@ export default function DestinationCard({ destination }: { destination: Destinat
                 <FiStar className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
                 <span className="text-sm font-bold text-amber-400">{destination.rating}</span>
               </div>
-              <span className="text-xs text-zinc-500">({destination.reviewCount.toLocaleString()})</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">({destination.reviewCount.toLocaleString()})</span>
             </div>
-            <div className="flex items-center gap-1 text-zinc-400">
+            <div className="flex items-center gap-1 text-zinc-500 dark:text-zinc-400">
               <FiDollarSign className="h-3.5 w-3.5" />
               <span className="text-sm font-semibold">${destination.averageCostPerDay}</span>
-              <span className="text-xs text-zinc-500">/day</span>
+              <span className="text-xs text-zinc-400 dark:text-zinc-500">/day</span>
             </div>
           </div>
 
@@ -108,7 +108,7 @@ export default function DestinationCard({ destination }: { destination: Destinat
               <span
                 key={cat}
                 className={`rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${
-                  categoryColors[cat] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                  categoryColors[cat] || 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700'
                 }`}
               >
                 {cat}

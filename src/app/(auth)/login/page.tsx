@@ -43,9 +43,6 @@ export default function LoginPage() {
         password: data.password,
         callbackURL: '/explore',
       }, {
-        onRequest: () => {
-          setIsLoading(true);
-        },
         onSuccess: () => {
           setIsLoading(false);
           toast.success('Successfully signed in! Redirecting...');

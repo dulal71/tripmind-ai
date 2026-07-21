@@ -11,7 +11,7 @@ export default function ThemeToggle() {
     <motion.button
       whileTap={{ scale: 0.9 }}
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="flex items-center justify-center rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors cursor-pointer"
+      className="flex items-center justify-center rounded-lg p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
       {theme === 'dark' ? <FiSun className="h-4 w-4" /> : <FiMoon className="h-4 w-4" />}
