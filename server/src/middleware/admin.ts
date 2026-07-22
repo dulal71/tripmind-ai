@@ -18,7 +18,7 @@ export const requireAdmin = async (req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    if (user.role !== 'admin') {
+    if (user.role !== "admin") {
       res.status(403).json({ status: 'error', message: 'Admin access required' });
       return;
     }
